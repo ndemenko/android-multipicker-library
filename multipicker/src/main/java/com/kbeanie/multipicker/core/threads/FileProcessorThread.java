@@ -778,6 +778,98 @@ public class FileProcessorThread extends Thread {
         return null;
     }
 
+    protected String downScaleAndSaveImageForDownload(String image, int scale, int quality) throws PickerException {
+
+        FileOutputStream stream = null;
+        BufferedInputStream bstream = null;
+        Bitmap bitmap;
+        try {
+            BitmapFactory.Options optionsForGettingDimensions = new BitmapFactory.Options();
+            optionsForGettingDimensions.inJustDecodeBounds = true;
+            ParcelFileDescriptor parcelFileDescriptor = context.getContentResolver().openFileDescriptor(Uri.parse(image), "r");
+            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+            bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor, null, optionsForGettingDimensions);
+            parcelFileDescriptor.close();
+            if (bitmap != null) {
+                bitmap.recycle();
+            }
+
+            int w, l;
+            w = optionsForGettingDimensions.outWidth;
+            l = optionsForGettingDimensions.outHeight;
+
+            InputStream in = context.getContentResolver().openInputStream(Uri.parse(image));
+            ExifInterface exif= new ExifInterface(in);
+
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL);
+            int rotate = 0;
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotate = -90;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotate = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotate = 90;
+                    break;
+            }
+
+            int what = w > l ? w : l;
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            if (what > 3000) {
+                options.inSampleSize = scale * 6;
+            } else if (what > 2000 && what <= 3000) {
+                options.inSampleSize = scale * 5;
+            } else if (what > 1500 && what <= 2000) {
+                options.inSampleSize = scale * 4;
+            } else if (what > 1000 && what <= 1500) {
+                options.inSampleSize = scale * 3;
+            } else if (what > 400 && what <= 1000) {
+                options.inSampleSize = scale * 2;
+            } else {
+                options.inSampleSize = scale;
+            }
+
+            options.inJustDecodeBounds = false;
+            // TODO: Sometime the decode File Returns null for some images
+            ParcelFileDescriptor parcelFileDescriptor2 = context.getContentResolver().openFileDescriptor(Uri.parse(image), "r");
+            FileDescriptor fileDescriptor2 = parcelFileDescriptor2.getFileDescriptor();
+            bitmap= BitmapFactory.decodeFileDescriptor(fileDescriptor2, null, options);
+            parcelFileDescriptor2.close();
+            if (bitmap != null) {
+                String file_name = "tmp";
+                if(image.split("/").length > 0){
+                    file_name = image.split("/")[image.split("/").length-1];
+                }
+                File file = new File(
+                        (context.getCacheDir() + File.separator + file_name + "-scale-" + scale + ".jpg"));
+                stream = new FileOutputStream(file);
+                if (rotate != 0) {
+                    Matrix matrix = new Matrix();
+                    matrix.setRotate(rotate);
+                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+                            bitmap.getHeight(), matrix, false);
+                }
+
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream);
+                return file.getAbsolutePath();
+            }
+
+        } catch (Exception e) {
+            throw new PickerException("Error while generating thumbnail: " + scale + " " + image);
+        } finally {
+            close(bstream);
+            flush(stream);
+            close(stream);
+        }
+
+        return null;
+    }
+
     protected String getWidthOfImage(String path) {
         String width = "";
         try {

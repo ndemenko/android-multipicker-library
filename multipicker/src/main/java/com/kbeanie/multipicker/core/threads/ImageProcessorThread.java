@@ -100,10 +100,17 @@ public final class ImageProcessorThread extends FileProcessorThread {
     }
 
     private ChosenImage generateThumbnails(ChosenImage image) throws PickerException {
-        String thumbnailBig = downScaleAndSaveImage(image.getOriginalPath(), THUMBNAIL_BIG, quality);
-        image.setThumbnailPath(thumbnailBig);
-        String thumbnailSmall = downScaleAndSaveImage(image.getOriginalPath(), THUMBNAIL_SMALL, quality);
-        image.setThumbnailSmallPath(thumbnailSmall);
+        if (image.getQueryUri() != null && image.getQueryUri().contains("content://com.android.providers.downloads.documents")) {
+            String thumbnailBig = downScaleAndSaveImageForDownload(image.getQueryUri(), THUMBNAIL_BIG, quality);
+            image.setThumbnailPath(thumbnailBig);
+            String thumbnailSmall = downScaleAndSaveImageForDownload(image.getQueryUri(), THUMBNAIL_SMALL, quality);
+            image.setThumbnailSmallPath(thumbnailSmall);
+        } else {
+            String thumbnailBig = downScaleAndSaveImage(image.getOriginalPath(), THUMBNAIL_BIG, quality);
+            image.setThumbnailPath(thumbnailBig);
+            String thumbnailSmall = downScaleAndSaveImage(image.getOriginalPath(), THUMBNAIL_SMALL, quality);
+            image.setThumbnailSmallPath(thumbnailSmall);
+        }
         return image;
     }
 

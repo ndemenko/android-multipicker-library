@@ -56,7 +56,7 @@ public abstract class PickImageActivity extends AppCompatActivity implements Ima
         if (resultCode == RESULT_OK) {
             if (requestCode == Picker.PICK_IMAGE_CAMERA || requestCode == Picker.PICK_IMAGE_DEVICE) {
                 ImagePickerImpl imagePickerImpl = null;
-                if (pickerType == Picker.PICK_IMAGE_DEVICE) {
+                if (pickerType != Picker.PICK_IMAGE_DEVICE) {
                     if (imagePicker == null) {
                         imagePicker = prepareImagePicker();
                     }
