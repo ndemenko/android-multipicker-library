@@ -1,6 +1,6 @@
-sonatypeRepo=sonatypeRepo
-sonatypeUsername=sonatypeUsername
-sonatypePassword=sonatypePassword
+sonatypeRepo=null
+sonatypeUsername=null
+sonatypePassword=null
 scmUrl=repo_url
 
 
